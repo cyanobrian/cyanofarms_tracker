@@ -30,17 +30,21 @@ def load_data():
     # 7. Clean the data 
     df = df[df['Item'] != ''] # Remove rows where 'Item' is an empty string
     df = df[(df['Item'] != 'Chickpeas') & (df['Item'] != 'Beet Greens')] # Remove since harverst too insignificant
-
+    df['Item'] = df['Item'].astype('category')     # Convert a single column
 
     # Convert all strings to numbers in columns where appropriate 
     col_to_num = ['Weight (g)','Weight (lb)', 'Lowerbound Value ($)','Value ($)', 'Week']
     df['Value ($)'] = df['Value ($)'].str.replace('$', '', regex=False)
     df['Lowerbound Value ($)'] = df['Lowerbound Value ($)'].str.replace('$', '', regex=False)
 
+
     for col in col_to_num: 
         df[col] = pd.to_numeric(df[col])
 
+    # Convert week column to the week start day 
     df['Date'] = pd.to_datetime(df['Date'])
+    
+    df['Week'] = df['Date'].apply(lambda date: pd.offsets.Week(weekday=6).rollback(date.normalize()).strftime('%m/%d/%Y'))
 
     return df 
 
@@ -51,7 +55,10 @@ def calculate_summary_stats(df):
     summary_stats['Total Weight'] = df['Weight (lb)'].sum()
 
     # Weight from Current Week
-    current_week = df[df['Week'] == df["Week"].max()]
+    most_recent_saturday = pd.offsets.Week(weekday=5).rollback(pd.Timestamp.today().normalize())
+    current_week = df[df['Date'] > most_recent_saturday] 
+
+
     summary_stats['Current Week Weight'] = current_week['Weight (lb)'].sum()
 
     # All Time Value
@@ -82,6 +89,8 @@ def calculate_summary_stats(df):
     return summary_stats
 
 def top_producers(df): 
+    if len(df) == 0: 
+        return None
     df_item_pivot = pd.pivot_table(df, values=['Weight (lb)', 'Value ($)'], index='Item', aggfunc='sum')
     best_value = df_item_pivot.sort_values('Value ($)', ascending=False)
     best_weight = df_item_pivot.sort_values('Weight (lb)', ascending=False)
