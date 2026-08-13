@@ -1,6 +1,7 @@
 import streamlit as st
+import altair as alt
 import pandas as pd 
-from data import load_data, calculate_summary_stats, top_producers
+from data import load_data, calculate_summary_stats, top_producers, item_to_color
 from PIL import Image, ImageOps
 
 df = load_data()
@@ -17,25 +18,21 @@ st.set_page_config(
 """
 # Cyano Farms
 
-Cyano Farms is an organic smallholder farm located 45 minutes west of Boston. We’ve supplied over 20 families from a variety of fresh fruits, vegetables, mushrooms, and seedlings. During the 2026 season, we've grown over 300 plants from seed including leafy greens, tomatoes, zucchini, and herbs. 
+Cyano Farms is an organic smallholder farm entirely operated by Brian. We’ve supplied over 20 families from a variety of fresh fruits, vegetables, mushrooms, and seedlings. During the 2026 season, we've grown over 300 plants from seed including leafy greens, tomatoes, zucchini, and herbs. 
 
-At the core of everything we do is a commitment to organic and sustainable practices. We used only upcycled materials, diverting hundreds of pounds of waste from the landfill to construct our raised beds, trellises, and plant covers. In addition, we use exclusively gray or rain water and organic pesticides and fertilizers. 
+At the core of everything we do is a commitment to organic and sustainable agricultural practices. We used only upcycled materials, diverting hundreds of pounds of waste from the landfill to construct our raised beds, trellises, and plant covers. In addition, we collect gray or rain water to water out plants and use only organic pesticides and fertilizers. 
 
 """
 
 ""  # Add a little vertical space. Same as st.write("").
 ""
-images = ['butternut.jpg', 'chard.jpg', 'mushroom.jpg', 'squash_kale.jpg', 'tomatoes.jpg' ]
+images = [ 'tomatoes.jpg', 'squash_kale.jpg', 'chard.jpg', 'butternut.jpg', 'mushroom.jpg']
 paths = ['images/'+ path for path in images]
 img = [ImageOps.exif_transpose(Image.open(path)) for path in paths]
 
 
 st.image(img, width= 300)
 
-
-"""
-## 2026
-"""
 # Filter by plant
 plant_selection = st.multiselect(
     "Select food",
@@ -46,7 +43,7 @@ plant_selection = st.multiselect(
 
 
 df_filter_plant = df[df['Item'].isin(plant_selection)]
-
+df_filter_plant['Color'] = df_filter_plant['Item'].apply(item_to_color)
 # # Filter by date range 
 # start_date, end_date = st.select_slider(
 #     "Select a date range",
@@ -55,13 +52,39 @@ df_filter_plant = df[df['Item'].isin(plant_selection)]
 # )
 # df_filter_plant_date = df_filter_plant[df_filter_plant['Date'].between(start_date, end_date)]
 
+tab1, tab2 = st.tabs(["Week", "Day"])
+with tab1:
+    st.header("Harvest by Week")
+    # st.bar_chart(df_filter_plant, x="Week", y="Weight (lb)", color='Item', stack=True)
+    chart = (
+        alt.Chart(df_filter_plant)
+        .mark_bar()
+        .encode(
+            x=alt.X("Week:N", title="Week", axis=alt.Axis(labelAngle=0)),
+            y=alt.Y("Weight (lb):Q", title="Weight (lb)"),
+            color = alt.Color(
+                    "Color:N",
+                    scale=None,
+                    legend=None
+                ),
+            tooltip=[
+                alt.Tooltip("Week:N"),
+                alt.Tooltip("Item:N"),
+                alt.Tooltip("Weight (lb):Q", format=".2f"),
+            ],
+        )
+    )
 
-st.bar_chart(df_filter_plant, x="Week", y="Weight (lb)", color='Item', stack=True)
-
+    st.altair_chart(chart)
+with tab2:
+    st.header("Harvest by Day")
+    st.bar_chart(df_filter_plant, x="Date", y="Weight (lb)", color='Item', stack=True)
 
 sum_stats = calculate_summary_stats(df_filter_plant)
 top_producer_stats = top_producers(df_filter_plant)
-
+"""
+## 2026 Season
+"""
 with st.container(horizontal=True, gap="medium"):
     cols = st.columns([0.15, 0.35, 0.15, 0.35], gap="medium")
 
@@ -80,8 +103,20 @@ with st.container(horizontal=True, gap="medium"):
     with cols[1]:
         st.write("Top Producers by Weight")
         if top_producer_stats is not None:
-            st.bar_chart(top_producer_stats[1][0:min(len(top_producer_stats[1]), 5)], 
-                            y = 'Weight (lb)', horizontal = True, sort = False)
+            chart_data = top_producer_stats[1][0:min(len(top_producer_stats[1]), 5)]
+            chart_data["Color"] = chart_data['Item'].apply(item_to_color)
+            chart = alt.Chart(chart_data).mark_bar().encode(
+                x=alt.X("Weight (lb):Q"),
+                y=alt.Y("Item:N", sort="-x"),
+                color=alt.Color(
+                    "Color:N",
+                    scale=None,
+                    legend=None
+                ),
+                tooltip=["Item", "Weight (lb)"]
+            )
+
+            st.altair_chart(chart)
 
     with cols[2]:
         st.metric(
@@ -96,8 +131,20 @@ with st.container(horizontal=True, gap="medium"):
     with cols[3]:
         st.write("Top Producers by Value")
         if top_producer_stats is not None: 
-            st.bar_chart(top_producer_stats[0][0:min(len(top_producer_stats[1]), 5)], 
-                            y = 'Value ($)', y_label = "Value ($)", horizontal = True, sort = False)
+            chart_data = top_producer_stats[0][0:min(len(top_producer_stats[1]), 5)]
+            chart_data["Color"] = chart_data['Item'].apply(item_to_color)
+            chart = alt.Chart(chart_data).mark_bar().encode(
+                x=alt.X("Value ($):Q"),
+                y=alt.Y("Item:N", sort="-x"),
+                color=alt.Color(
+                    "Color:N",
+                    scale=None,
+                    legend=None
+                ),
+                tooltip=["Item", "Value ($)"]
+            )
+
+            st.altair_chart(chart)
 
 """
 ## Last 7 Days
@@ -123,8 +170,20 @@ with st.container(horizontal=True, gap="medium"):
 
     with cols[1]:
         st.write("Top Producers by Weight")
-        if week_top_producer_stats is not None: 
-            st.bar_chart(week_top_producer_stats[1][0:min(len(week_top_producer_stats[1]), 5)], y = 'Weight (lb)', horizontal = True, sort = False)
+        if week_top_producer_stats is not None:
+            chart_data = week_top_producer_stats[1][0:min(len(week_top_producer_stats[1]), 5)]
+            chart_data["Color"] = chart_data['Item'].apply(item_to_color)
+            chart = alt.Chart(chart_data).mark_bar().encode(
+                x=alt.X("Weight (lb):Q"),
+                y=alt.Y("Item:N", sort="-x"),
+                color=alt.Color(
+                    "Color:N",
+                    scale=None,
+                    legend=None
+                ),
+                tooltip=["Item", "Weight (lb)"]
+            )
+            st.altair_chart(chart)
     with cols[2]:
             st.metric(
                 'Value',
@@ -138,14 +197,25 @@ with st.container(horizontal=True, gap="medium"):
     with cols[3]:
         st.write("Top Producers by Value")
         if week_top_producer_stats is not None: 
-            st.bar_chart(week_top_producer_stats[0][0:min(len(week_top_producer_stats[1]), 5)], y = 'Value ($)', y_label = "Value ($)", horizontal = True, sort = False)
-
+            chart_data = week_top_producer_stats[0][0:min(len(week_top_producer_stats[0]), 5)]
+            chart_data["Color"] = chart_data['Item'].apply(item_to_color)
+            chart = alt.Chart(chart_data).mark_bar().encode(
+                x=alt.X("Value ($):Q"),
+                y=alt.Y("Item:N", sort="-x"),
+                color=alt.Color(
+                    "Color:N",
+                    scale=None,
+                    legend=None
+                ),
+                tooltip=["Item", "Value ($)"]
+            )
+            st.altair_chart(chart)
 
 """
 ## Raw Data
 
 """
-st.dataframe(df[['Date', 'Item', 'Weight (lb)', 'Value ($)']])
+st.dataframe(df_filter_plant[['Date', 'Item', 'Weight (lb)', 'Value ($)']])
 
 
 

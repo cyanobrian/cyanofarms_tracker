@@ -2,6 +2,27 @@ import gspread
 from google.oauth2.service_account import Credentials
 import pandas as pd 
 
+
+def item_to_color(item):
+    # Converts series of items to hex code colors 
+    colors = {
+    "Arugula": "#4F8A3D",
+    "Basil": "#176B4A",
+    "Beet Greens": "#789447",
+    "Chickpeas": "#D4A84F",
+    "Kale, Vates": "#245B3A",
+    "Kale, Red Russian": "#874F68",
+    "Oyster Mushrooms": "#A99B8C",
+    "Summer Squash": "#E0C13A",
+    "Swiss Chard": "#2E7D6B",
+    "Tomatoes": "#C8463D",
+    "Zucchini, Elite": "#7FAE3F",
+    "Zucchini, Costata Romanesco": "#B7A83D"
+    }
+
+    return colors[item]
+
+
 def load_data():
     # Load the data as a dataframe, clean out empty data, and return a pandas Dataframe 
     # 1. Define the scope of the application
@@ -92,8 +113,9 @@ def top_producers(df):
     if len(df) == 0: 
         return None
     df_item_pivot = pd.pivot_table(df, values=['Weight (lb)', 'Value ($)'], index='Item', aggfunc='sum')
-    best_value = df_item_pivot.sort_values('Value ($)', ascending=False)
-    best_weight = df_item_pivot.sort_values('Weight (lb)', ascending=False)
+    best_value = df_item_pivot.sort_values('Value ($)', ascending=False).reset_index()
+    best_weight = df_item_pivot.sort_values('Weight (lb)', ascending=False).reset_index()
+
 
     # curr_week = df[df['Date'] >= pd.Timestamp.today().normalize() - pd.Timedelta(days=7)]
     # df_week_item_pivot = pd.pivot_table(curr_week, values=['Weight (lb)', 'Value ($)'], index='Item', aggfunc='sum')
@@ -111,5 +133,6 @@ def top_producers(df):
 
 
 df = load_data()
+# print(top_producers(df)[0].reset_index())
 # print(pd.pivot_table(df, values=['Weight (lb)', 'Value ($)'], columns=['Week', 'Item'], aggfunc='sum'))
 # print(calculate_summary_stats(df).keys())
