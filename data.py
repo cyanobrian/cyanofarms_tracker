@@ -42,7 +42,7 @@ def load_data():
     worksheet = spreadsheet.worksheet("Harvesting")  # Get the Harvesting tab 
 
     # 5. Extract the data 
-    data = worksheet.get('A1:H200') # Get it without $ sign in amounts
+    data = worksheet.get('A1:H300') # Get it without $ sign in amounts
 
     # 6. Import to Dataframe 
     df = pd.DataFrame(data, columns=data[0])
@@ -50,7 +50,7 @@ def load_data():
 
     # 7. Clean the data 
     df = df[df['Item'] != ''] # Remove rows where 'Item' is an empty string
-    df = df[(df['Item'] != 'Chickpeas') & (df['Item'] != 'Beet Greens')] # Remove since harverst too insignificant
+    # df = df[(df['Item'] != 'Chickpeas') & (df['Item'] != 'Beet Greens')] # Remove since harverst too insignificant
     df['Item'] = df['Item'].astype('category')     # Convert a single column
 
     # Convert all strings to numbers in columns where appropriate 
@@ -65,8 +65,13 @@ def load_data():
     # Convert week column to the week start day 
     df['Date'] = pd.to_datetime(df['Date'])
     
-    df['Week'] = df['Date'].apply(lambda date: pd.offsets.Week(weekday=6).rollback(date.normalize()).strftime('%m/%d/%Y'))
+    week_begin_date = df['Date'].apply(lambda date: pd.offsets.Week(weekday=6).rollback(date.normalize()))
+    week_end_date = week_begin_date.apply(lambda x: x + pd.Timedelta(days=6))
+    # df['Week Range'] = pd.Series(
+    df.insert(0, "Week Range", 
+        [f"{d1.strftime('%m/%d')}-{d2.strftime('%m/%d')}" for d1, d2 in zip(week_begin_date, week_end_date)]
 
+    )
     return df 
 
 def calculate_summary_stats(df):
@@ -133,6 +138,8 @@ def top_producers(df):
 
 
 df = load_data()
+
+# print(df.pivot_table(values='Weight (lb)', index=['Week Range', 'Item'], aggfunc='sum', fill_value= 0, observed = False).reset_index().shape)
 # print(top_producers(df)[0].reset_index())
 # print(pd.pivot_table(df, values=['Weight (lb)', 'Value ($)'], columns=['Week', 'Item'], aggfunc='sum'))
 # print(calculate_summary_stats(df).keys())

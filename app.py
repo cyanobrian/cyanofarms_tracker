@@ -18,7 +18,7 @@ st.set_page_config(
 """
 # Cyano Farms
 
-Cyano Farms is an organic smallholder farm entirely operated by Brian. We’ve supplied over 20 families from a variety of fresh fruits, vegetables, mushrooms, and seedlings. During the 2026 season, we've grown over 300 plants from seed including leafy greens, tomatoes, zucchini, and herbs. 
+Cyano Farms is an organic smallholder farm operated by Brian. We’ve supplied over 20 families from a variety of fresh fruits, vegetables, mushrooms, and seedlings. During the 2026 season, we've grown over 300 plants from seed including leafy greens, tomatoes, zucchini, and herbs. 
 
 At the core of everything we do is a commitment to organic and sustainable agricultural practices. We used only upcycled materials, diverting hundreds of pounds of waste from the landfill to construct our raised beds, trellises, and plant covers. In addition, we collect gray or rain water to water out plants and use only organic pesticides and fertilizers. 
 
@@ -44,6 +44,7 @@ plant_selection = st.multiselect(
 
 df_filter_plant = df[df['Item'].isin(plant_selection)]
 df_filter_plant['Color'] = df_filter_plant['Item'].apply(item_to_color)
+
 # # Filter by date range 
 # start_date, end_date = st.select_slider(
 #     "Select a date range",
@@ -55,12 +56,14 @@ df_filter_plant['Color'] = df_filter_plant['Item'].apply(item_to_color)
 tab1, tab2 = st.tabs(["Week", "Day"])
 with tab1:
     st.header("Harvest by Week")
-    # st.bar_chart(df_filter_plant, x="Week", y="Weight (lb)", color='Item', stack=True)
+    pivoted_data = df.pivot_table(values='Weight (lb)', index=['Week Range', 'Item'], aggfunc='sum', fill_value= 0, observed = False).reset_index()
+    pivoted_data = pivoted_data[pivoted_data['Item'].isin(plant_selection)]
+    pivoted_data['Color'] = pivoted_data['Item'].apply(item_to_color)
     chart = (
-        alt.Chart(df_filter_plant)
+        alt.Chart(pivoted_data)
         .mark_bar()
         .encode(
-            x=alt.X("Week:N", title="Week", axis=alt.Axis(labelAngle=0)),
+            x=alt.X("Week Range:O", title="Week Range", axis=alt.Axis(labelAngle=0)),
             y=alt.Y("Weight (lb):Q", title="Weight (lb)"),
             color = alt.Color(
                     "Color:N",
@@ -68,17 +71,36 @@ with tab1:
                     legend=None
                 ),
             tooltip=[
-                alt.Tooltip("Week:N"),
+                alt.Tooltip("Week Range:O"),
                 alt.Tooltip("Item:N"),
                 alt.Tooltip("Weight (lb):Q", format=".2f"),
             ],
         )
     )
-
     st.altair_chart(chart)
 with tab2:
     st.header("Harvest by Day")
-    st.bar_chart(df_filter_plant, x="Date", y="Weight (lb)", color='Item', stack=True)
+    # st.bar_chart(df_filter_plant, x="Date", y="Weight (lb)", color='Item', stack=True)
+    # st.bar_chart(df_filter_plant, x="Week", y="Weight (lb)", color='Item', stack=True)
+    chart = (
+        alt.Chart(df_filter_plant)
+        .mark_bar()
+        .encode(
+            x=alt.X("Date:T", title="Date", axis=alt.Axis(format='%m/%d', labelAngle=0)),
+            y=alt.Y("Weight (lb):Q", title="Weight (lb)"),
+            color = alt.Color(
+                    "Color:N",
+                    scale=None,
+                    legend=None
+                ),
+            tooltip=[
+                alt.Tooltip("Date:T"),
+                alt.Tooltip("Item:N"),
+                alt.Tooltip("Weight (lb):Q", format=".2f"),
+            ],
+        )
+    )
+    st.altair_chart(chart)
 
 sum_stats = calculate_summary_stats(df_filter_plant)
 top_producer_stats = top_producers(df_filter_plant)
@@ -97,7 +119,7 @@ with st.container(horizontal=True, gap="medium"):
             delta = f"{sum_stats['Current Week Weight']:.2f} lb",
             format = None,
             
-            delta_description= "Since " +  pd.offsets.Week(weekday=6).rollback(pd.Timestamp.today().normalize()).strftime('%m/%d/%Y')
+            delta_description= "Since " +  pd.offsets.Week(weekday=6).rollback(pd.Timestamp.today().normalize()).strftime('%m/%d')
             )
 
     with cols[1]:
@@ -107,7 +129,7 @@ with st.container(horizontal=True, gap="medium"):
             chart_data["Color"] = chart_data['Item'].apply(item_to_color)
             chart = alt.Chart(chart_data).mark_bar().encode(
                 x=alt.X("Weight (lb):Q"),
-                y=alt.Y("Item:N", sort="-x"),
+                y=alt.Y("Item:N", sort="-x", title = "", axis= alt.Axis(labelLimit=200)),
                 color=alt.Color(
                     "Color:N",
                     scale=None,
@@ -125,7 +147,7 @@ with st.container(horizontal=True, gap="medium"):
             width="content",
             delta = f"{sum_stats['Current Week Value']:.2f}",
             format = "dollar",
-            delta_description= "Since " +  pd.offsets.Week(weekday=6).rollback(pd.Timestamp.today().normalize()).strftime('%m/%d/%Y')
+            delta_description= "Since " +  pd.offsets.Week(weekday=6).rollback(pd.Timestamp.today().normalize()).strftime('%m/%d')
             )
 
     with cols[3]:
@@ -135,7 +157,7 @@ with st.container(horizontal=True, gap="medium"):
             chart_data["Color"] = chart_data['Item'].apply(item_to_color)
             chart = alt.Chart(chart_data).mark_bar().encode(
                 x=alt.X("Value ($):Q"),
-                y=alt.Y("Item:N", sort="-x"),
+                y=alt.Y("Item:N", sort="-x", title = "", axis= alt.Axis(labelLimit=200)),
                 color=alt.Color(
                     "Color:N",
                     scale=None,
@@ -175,7 +197,7 @@ with st.container(horizontal=True, gap="medium"):
             chart_data["Color"] = chart_data['Item'].apply(item_to_color)
             chart = alt.Chart(chart_data).mark_bar().encode(
                 x=alt.X("Weight (lb):Q"),
-                y=alt.Y("Item:N", sort="-x"),
+                y=alt.Y("Item:N", sort="-x", title = "", axis= alt.Axis(labelLimit=200)),
                 color=alt.Color(
                     "Color:N",
                     scale=None,
@@ -201,7 +223,7 @@ with st.container(horizontal=True, gap="medium"):
             chart_data["Color"] = chart_data['Item'].apply(item_to_color)
             chart = alt.Chart(chart_data).mark_bar().encode(
                 x=alt.X("Value ($):Q"),
-                y=alt.Y("Item:N", sort="-x"),
+                y=alt.Y("Item:N", sort="-x", title = "", axis= alt.Axis(labelLimit=200)),
                 color=alt.Color(
                     "Color:N",
                     scale=None,
@@ -221,35 +243,3 @@ st.dataframe(df_filter_plant[['Date', 'Item', 'Weight (lb)', 'Value ($)']])
 
 with st.bottom:
     st.caption("Value is calculated based on the price of equivalent item at Whole Foods.")
-    # # Column 1 for weekly metrics 
-    # with cols[1]:
-    #     st.subheader("Current Week")
-    #     st.metric(
-    #         'Weight',
-    #         f"{sum_stats['Current Week Weight']:.2f} lb",
-    #         width="content",
-    #         delta = f"{sum_stats['Weight Delta']:.2f} lb",
-    #         format = None,
-    #         delta_description= "Relative to the same day last week."
-    #         )
-    #     st.metric(
-    #         'Value',
-    #         f"{sum_stats['Current Week Savings']:.2f}",
-    #         width="content",
-    #         delta = sum_stats['Savings Delta'],
-    #         format = "dollar",
-    #         delta_description= "Relative to the same day last week."
-    #         )
-
-    # for index, (key, value) in enumerate(sum_stats.items()):
-    #     with cols[index]:
-    #         st.metric(
-    #             key,
-    #             f"{value:.2f}",
-    #             # delta=f"{max_temp_2015 - max_temp_2014:0.1f}C",
-    #             width="content",
-    #             format = metric_format[index]
-    #         )
-
-   
-   
