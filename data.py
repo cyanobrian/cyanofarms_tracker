@@ -1,7 +1,7 @@
 import gspread
 from google.oauth2.service_account import Credentials
 import pandas as pd 
-
+import streamlit as st
 
 def item_to_color(item):
     # Converts series of items to hex code colors 
@@ -31,12 +31,13 @@ def load_data():
     ]
 
     # 2. Authenticate using your credentials JSON file
-    cred = Credentials.from_service_account_file("credentials.json", scopes=scopes)
+    cred = Credentials.from_service_account_info(st.secrets["credentials"], scopes=scopes)
     client = gspread.authorize(cred)
 
     # 3. Open the spreadsheet by its exact title or URL
-    with open("raw_data_url.txt", "r") as file:
-        url = file.read()
+    # with open("raw_data_url.txt", "r") as file:
+    #     url = file.read()
+    url = st.secrets["data_url"]
     spreadsheet = client.open_by_url(url)
     # 4. Select the specific worksheet (tab)
     worksheet = spreadsheet.worksheet("Harvesting")  # Get the Harvesting tab 

@@ -26,12 +26,12 @@ At the core of everything we do is a commitment to organic and sustainable agric
 
 ""  # Add a little vertical space. Same as st.write("").
 ""
-images = [ 'tomatoes.jpg', 'squash_kale.jpg', 'chard.jpg', 'butternut.jpg', 'mushroom.jpg']
-paths = ['images/'+ path for path in images]
-img = [ImageOps.exif_transpose(Image.open(path)) for path in paths]
+# images = [ 'tomatoes.jpg', 'squash_kale.jpg', 'chard.jpg', 'butternut.jpg', 'mushroom.jpg']
+# paths = ['images/'+ path for path in images]
+# img = [ImageOps.exif_transpose(Image.open(path)) for path in paths]
 
 
-st.image(img, width= 300)
+# st.image(img, width= 300)
 
 # Filter by plant
 plant_selection = st.multiselect(
