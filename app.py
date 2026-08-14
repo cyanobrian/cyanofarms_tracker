@@ -4,7 +4,7 @@ import pandas as pd
 from data import load_data, calculate_summary_stats, top_producers, item_to_color
 from PIL import Image, ImageOps
 
-def top_producers_chart(metric_name, data, num_to_display = 5): 
+def render_top_producers_chart(metric_name, data, num_to_display = 5): 
     # Given metric (str), "Value" or "Weight"
     # Data （tuple) with two dataframes
     # return a bar chart object with the top 5 producing plants
@@ -22,7 +22,18 @@ def top_producers_chart(metric_name, data, num_to_display = 5):
         ),
         tooltip=["Item", metric_name]
     )
-    return chart
+    labels = alt.Chart(data).mark_text(
+        align="left",
+        baseline="middle",
+        dx=5,
+        color="white"
+    ).encode(
+        x=alt.X(f"{metric_name}:Q"),
+        y=alt.Y("Item:N", sort="-x"),
+        text=alt.Text(f"{metric_name}:Q", format=",.2f")
+    )
+
+    st.altair_chart(chart + labels)
 
 df = load_data()
 
@@ -69,7 +80,7 @@ df_filter_plant = df[df['Item'].isin(crop_selection)]
 df_filter_plant['Color'] = df_filter_plant['Item'].apply(item_to_color)
 
 @st.fragment
-def render_top_chart(data, granularity, metric):
+def render_top_chart(data, granularity, metric, include_bars = True):
     index_col = 'Week Range' if granularity=='Week' else 'Date'
     metric_col = 'Weight (lb)' if metric == 'Weight' else 'Value ($)'
 
@@ -99,22 +110,44 @@ def render_top_chart(data, granularity, metric):
                 alt.Tooltip(f'{metric_col}:Q', format=".2f"),
             ],
         )
-    
+    bar_heights = (
+        pivoted_data
+        .groupby(index_col, as_index=False)[metric_col]
+        .sum()
+    )
     st.header(f"Harvest by {granularity}")
-    st.altair_chart(bar)   
+    if not include_bars:
+        st.altair_chart(bar) 
+        return 
+    labels = alt.Chart(bar_heights).mark_text(
+        align="center",
+        baseline="bottom",
+        dy=-5,
+        color= "#e2e8f0"
+    ).encode(
+        x=x_axis,
+        y=alt.Y(f'{metric_col}:Q'),
+        text=alt.Text(
+            f'{metric_col}:Q',
+            format=".2f"
+        )
+    )
+    st.altair_chart(bar + labels)   
 
 
 
-cols = st.columns([0.10, 0.90], gap="medium")
+cols = st.columns([0.10, 0.10, 0.8], gap="medium")
 with cols[0]: 
     metric_selection = st.pills("Metric", ['Weight', "Value"], default='Weight', required=True)
 
 with cols[1]: 
     agg_selection = st.pills("Aggregation", ['Week', "Day"], default = 'Week', required=True)
+with cols[2]: 
+    bar_height_toggle = st.toggle("Bar Height Labels")
         
 
 with st.container(horizontal=True, gap="medium"):  
-    render_top_chart(df, agg_selection, metric_selection)
+    render_top_chart(df, agg_selection, metric_selection, bar_height_toggle)
 
 
 
@@ -156,7 +189,7 @@ with st.container(horizontal=True, gap="medium"):
     with cols[1]:
         st.write("Top Producers by Weight")
         if top_producer_stats is not None:
-            st.altair_chart(top_producers_chart("Weight (lb)", top_producer_stats, 5))
+            render_top_producers_chart("Weight (lb)", top_producer_stats, 5)
 
     with cols[2]:
         st.metric(
@@ -171,7 +204,7 @@ with st.container(horizontal=True, gap="medium"):
     with cols[3]:
         st.write("Top Producers by Value")
         if top_producer_stats is not None: 
-            st.altair_chart(top_producers_chart("Value ($)", top_producer_stats, 5))
+            render_top_producers_chart("Value ($)", top_producer_stats, 5)
 
 """
 ## Last 7 Days
@@ -198,7 +231,7 @@ with st.container(horizontal=True, gap="medium"):
     with cols[1]:
         st.write("Top Producers by Weight")
         if week_top_producer_stats is not None:
-            st.altair_chart(top_producers_chart("Weight (lb)", week_top_producer_stats, 5))
+            render_top_producers_chart("Weight (lb)", week_top_producer_stats, 5)
 
     with cols[2]:
             st.metric(
@@ -213,7 +246,7 @@ with st.container(horizontal=True, gap="medium"):
     with cols[3]:
         st.write("Top Producers by Value")
         if week_top_producer_stats is not None: 
-            st.altair_chart(top_producers_chart("Value ($)", week_top_producer_stats, 5))
+            render_top_producers_chart("Value ($)", week_top_producer_stats, 5)
 
 
 """
