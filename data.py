@@ -2,6 +2,7 @@ import gspread
 from google.oauth2.service_account import Credentials
 import pandas as pd 
 import streamlit as st
+from streamlit_gsheets import GSheetsConnection
 
 def item_to_color(item):
     # Converts series of items to hex code colors 
@@ -24,40 +25,19 @@ def item_to_color(item):
 
 
 def load_data():
-    # Load the data as a dataframe, clean out empty data, and return a pandas Dataframe 
-    # 1. Define the scope of the application
-    scopes = [
-        "https://www.googleapis.com/auth/spreadsheets",
-    ]
-
-    # 2. Authenticate using your credentials JSON file
-    cred = Credentials.from_service_account_info(st.secrets["credentials"], scopes=scopes)
-    client = gspread.authorize(cred)
-
-    # 3. Open the spreadsheet by its exact title or URL
-    # with open("raw_data_url.txt", "r") as file:
-    #     url = file.read()
-    url = st.secrets["data_url"]
-    spreadsheet = client.open_by_url(url)
-    # 4. Select the specific worksheet (tab)
-    worksheet = spreadsheet.worksheet("Harvesting")  # Get the Harvesting tab 
-
-    # 5. Extract the data 
-    data = worksheet.get('A1:H300') # Get it without $ sign in amounts
-
-    # 6. Import to Dataframe 
-    df = pd.DataFrame(data, columns=data[0])
-    df = df.drop(0) # Drop the first row now that it's the column label  
+    # Create a connection object.
+    conn = st.connection("gsheets", type=GSheetsConnection)
+    df = conn.read( worksheet="Harvesting",ttl="10m",usecols=list(range(0,7)),nrows=200)
 
     # 7. Clean the data 
-    df = df[df['Item'] != ''] # Remove rows where 'Item' is an empty string
+    df = df.dropna(axis = 0, subset = ['Date', 'Item']) # Remove rows where 'Date' or 'Item' are Na
     # df = df[(df['Item'] != 'Chickpeas') & (df['Item'] != 'Beet Greens')] # Remove since harverst too insignificant
     df['Item'] = df['Item'].astype('category')     # Convert a single column
-
+    print(df)
     # Convert all strings to numbers in columns where appropriate 
-    col_to_num = ['Weight (g)','Weight (lb)', 'Lowerbound Value ($)','Value ($)', 'Week']
-    df['Value ($)'] = df['Value ($)'].str.replace('$', '', regex=False)
-    df['Lowerbound Value ($)'] = df['Lowerbound Value ($)'].str.replace('$', '', regex=False)
+    col_to_num = ['Weight (g)','Weight (lb)', 'Lowerbound Value ($)','Value ($)']
+    # df['Value ($)'] = df['Value ($)'].str.replace('$', '', regex=False)
+    # df['Lowerbound Value ($)'] = df['Lowerbound Value ($)'].str.replace('$', '', regex=False)
 
 
     for col in col_to_num: 
