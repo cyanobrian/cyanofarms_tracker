@@ -1,6 +1,6 @@
 import streamlit as st
 import pandas as pd 
-from data import load_data, calculate_summary_stats, calculate_top_producers, item_to_color
+from data import load_data, calculate_summary_stats, calculate_top_producers
 from render import render_main_bar, render_top_producers_chart
 from PIL import Image, ImageOps
 
