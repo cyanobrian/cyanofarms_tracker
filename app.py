@@ -4,6 +4,26 @@ import pandas as pd
 from data import load_data, calculate_summary_stats, top_producers, item_to_color
 from PIL import Image, ImageOps
 
+def top_producers_chart(metric_name, data, num_to_display = 5): 
+    # Given metric (str), "Value" or "Weight"
+    # Data （tuple) with two dataframes
+    # return a bar chart object with the top 5 producing plants
+    metric = {"Value ($)": 0, "Weight (lb)": 1}[metric_name]
+
+    data = data[metric][0:min(len(data[metric]), num_to_display)] # Get top 5
+    data["Color"] = data['Item'].apply(item_to_color)
+    chart = alt.Chart(data).mark_bar().encode(
+        x=alt.X(f'{metric_name}:Q'), 
+        y=alt.Y("Item:N", sort="-x", title = "", axis= alt.Axis(labelLimit=200)),
+        color=alt.Color(
+            "Color:N",
+            scale=None,
+            legend=None
+        ),
+        tooltip=["Item", metric_name]
+    )
+    return chart
+
 df = load_data()
 
 st.set_page_config(
@@ -33,18 +53,6 @@ At the core of everything we do is a commitment to organic and sustainable agric
 
 # st.image(img, width= 300)
 
-# Filter by plant
-plant_selection = st.multiselect(
-    "Select food",
-    df['Item'].unique(),
-    default = df['Item'].unique(),
-    accept_new_options=False
-)
-
-
-df_filter_plant = df[df['Item'].isin(plant_selection)]
-df_filter_plant['Color'] = df_filter_plant['Item'].apply(item_to_color)
-
 # # Filter by date range 
 # start_date, end_date = st.select_slider(
 #     "Select a date range",
@@ -53,62 +61,85 @@ df_filter_plant['Color'] = df_filter_plant['Item'].apply(item_to_color)
 # )
 # df_filter_plant_date = df_filter_plant[df_filter_plant['Date'].between(start_date, end_date)]
 
-tab1, tab2 = st.tabs(["Week", "Day"])
-with tab1:
-    st.header("Harvest by Week")
-    pivoted_data = df.pivot_table(values='Weight (lb)', index=['Week Range', 'Item'], aggfunc='sum', fill_value= 0, observed = False).reset_index()
-    pivoted_data = pivoted_data[pivoted_data['Item'].isin(plant_selection)]
+st.header(f'Harvests')
+crop_selection = st.multiselect( "Select crops", df['Item'].unique().sort_values(ascending = True),
+                                default = df['Item'].unique(), accept_new_options=False
+                                )
+df_filter_plant = df[df['Item'].isin(crop_selection)]
+df_filter_plant['Color'] = df_filter_plant['Item'].apply(item_to_color)
+
+@st.fragment
+def render_top_chart(data, granularity, metric):
+    index_col = 'Week Range' if granularity=='Week' else 'Date'
+    metric_col = 'Weight (lb)' if metric == 'Weight' else 'Value ($)'
+
+    pivoted_data = data.pivot_table(values=metric_col, index=[index_col, 'Item'], aggfunc='sum', fill_value= 0, observed = False).reset_index()
+    pivoted_data = pivoted_data[pivoted_data['Item'].isin(crop_selection)]
     pivoted_data['Color'] = pivoted_data['Item'].apply(item_to_color)
-    chart = (
-        alt.Chart(pivoted_data)
-        .mark_bar()
-        .encode(
-            x=alt.X("Week Range:O", title="Week Range", axis=alt.Axis(labelAngle=0)),
-            y=alt.Y("Weight (lb):Q", title="Weight (lb)"),
+
+    axis_label = {'Week': 'Week Range:O', 'Day': "Date:T"}[granularity]
+
+    x_axis = None
+    if granularity == 'Week': 
+        x_axis = alt.X(axis_label, title="Week", axis=alt.Axis(labelAngle=0))
+    else: 
+        x_axis = alt.X(axis_label, title='Date', axis=alt.Axis(format = '%m/%d', labelAngle=0))
+
+    bar = alt.Chart(pivoted_data).mark_bar().encode(
+            x= x_axis,
+            y=alt.Y(f'{metric_col}:Q', title=metric_col),
             color = alt.Color(
                     "Color:N",
                     scale=None,
                     legend=None
                 ),
             tooltip=[
-                alt.Tooltip("Week Range:O"),
+                alt.Tooltip(axis_label),
                 alt.Tooltip("Item:N"),
-                alt.Tooltip("Weight (lb):Q", format=".2f"),
+                alt.Tooltip(f'{metric_col}:Q', format=".2f"),
             ],
         )
-    )
-    st.altair_chart(chart)
-with tab2:
-    st.header("Harvest by Day")
-    # st.bar_chart(df_filter_plant, x="Date", y="Weight (lb)", color='Item', stack=True)
-    # st.bar_chart(df_filter_plant, x="Week", y="Weight (lb)", color='Item', stack=True)
-    chart = (
-        alt.Chart(df_filter_plant)
-        .mark_bar()
-        .encode(
-            x=alt.X("Date:T", title="Date", axis=alt.Axis(format='%m/%d', labelAngle=0)),
-            y=alt.Y("Weight (lb):Q", title="Weight (lb)"),
-            color = alt.Color(
-                    "Color:N",
-                    scale=None,
-                    legend=None
-                ),
-            tooltip=[
-                alt.Tooltip("Date:T"),
-                alt.Tooltip("Item:N"),
-                alt.Tooltip("Weight (lb):Q", format=".2f"),
-            ],
-        )
-    )
-    st.altair_chart(chart)
+    
+    st.header(f"Harvest by {granularity}")
+    st.altair_chart(bar)   
+
+
+
+cols = st.columns([0.10, 0.90], gap="medium")
+with cols[0]: 
+    metric_selection = st.pills("Metric", ['Weight', "Value"], default='Weight', required=True)
+
+with cols[1]: 
+    agg_selection = st.pills("Aggregation", ['Week', "Day"], default = 'Week', required=True)
+        
+
+with st.container(horizontal=True, gap="medium"):  
+    render_top_chart(df, agg_selection, metric_selection)
+
+
+
+# st.header(f"Harvest by {agg_selection}")
+# chart = render_top_chart(df, agg_selection, metric_selection)
+# st.altair_chart(chart)
+
+# tab1, tab2 = st.tabs(["Week", "Day"])
+# with tab1:
+#     st.header("Harvest by Week")
+#     chart = render_top_chart(df, 'Week', metric_selection)
+#     st.altair_chart(chart)
+# with tab2:
+#     st.header("Harvest by Day")
+#     chart = render_top_chart(df, 'Day', metric_selection)
+#     st.altair_chart(chart)
 
 sum_stats = calculate_summary_stats(df_filter_plant)
 top_producer_stats = top_producers(df_filter_plant)
+
 """
 ## 2026 Season
 """
 with st.container(horizontal=True, gap="medium"):
-    cols = st.columns([0.15, 0.35, 0.15, 0.35], gap="medium")
+    cols = st.columns([0.125, 0.375, 0.125, 0.375], gap="medium")
 
     # Column 0 for totals
     with cols[0]:
@@ -125,20 +156,7 @@ with st.container(horizontal=True, gap="medium"):
     with cols[1]:
         st.write("Top Producers by Weight")
         if top_producer_stats is not None:
-            chart_data = top_producer_stats[1][0:min(len(top_producer_stats[1]), 5)]
-            chart_data["Color"] = chart_data['Item'].apply(item_to_color)
-            chart = alt.Chart(chart_data).mark_bar().encode(
-                x=alt.X("Weight (lb):Q"),
-                y=alt.Y("Item:N", sort="-x", title = "", axis= alt.Axis(labelLimit=200)),
-                color=alt.Color(
-                    "Color:N",
-                    scale=None,
-                    legend=None
-                ),
-                tooltip=["Item", "Weight (lb)"]
-            )
-
-            st.altair_chart(chart)
+            st.altair_chart(top_producers_chart("Weight (lb)", top_producer_stats, 5))
 
     with cols[2]:
         st.metric(
@@ -153,20 +171,7 @@ with st.container(horizontal=True, gap="medium"):
     with cols[3]:
         st.write("Top Producers by Value")
         if top_producer_stats is not None: 
-            chart_data = top_producer_stats[0][0:min(len(top_producer_stats[1]), 5)]
-            chart_data["Color"] = chart_data['Item'].apply(item_to_color)
-            chart = alt.Chart(chart_data).mark_bar().encode(
-                x=alt.X("Value ($):Q"),
-                y=alt.Y("Item:N", sort="-x", title = "", axis= alt.Axis(labelLimit=200)),
-                color=alt.Color(
-                    "Color:N",
-                    scale=None,
-                    legend=None
-                ),
-                tooltip=["Item", "Value ($)"]
-            )
-
-            st.altair_chart(chart)
+            st.altair_chart(top_producers_chart("Value ($)", top_producer_stats, 5))
 
 """
 ## Last 7 Days
@@ -177,7 +182,7 @@ week_sum_stats = calculate_summary_stats(week_df)
 week_top_producer_stats = top_producers(week_df)
 
 with st.container(horizontal=True, gap="medium"):
-    cols = st.columns([0.15, 0.35, 0.15, 0.35], gap="medium")
+    cols = st.columns([0.125, 0.375, 0.125, 0.375], gap="medium")
 
     # Column 0 for totals
     with cols[0]:
@@ -193,19 +198,8 @@ with st.container(horizontal=True, gap="medium"):
     with cols[1]:
         st.write("Top Producers by Weight")
         if week_top_producer_stats is not None:
-            chart_data = week_top_producer_stats[1][0:min(len(week_top_producer_stats[1]), 5)]
-            chart_data["Color"] = chart_data['Item'].apply(item_to_color)
-            chart = alt.Chart(chart_data).mark_bar().encode(
-                x=alt.X("Weight (lb):Q"),
-                y=alt.Y("Item:N", sort="-x", title = "", axis= alt.Axis(labelLimit=200)),
-                color=alt.Color(
-                    "Color:N",
-                    scale=None,
-                    legend=None
-                ),
-                tooltip=["Item", "Weight (lb)"]
-            )
-            st.altair_chart(chart)
+            st.altair_chart(top_producers_chart("Weight (lb)", week_top_producer_stats, 5))
+
     with cols[2]:
             st.metric(
                 'Value',
@@ -219,27 +213,11 @@ with st.container(horizontal=True, gap="medium"):
     with cols[3]:
         st.write("Top Producers by Value")
         if week_top_producer_stats is not None: 
-            chart_data = week_top_producer_stats[0][0:min(len(week_top_producer_stats[0]), 5)]
-            chart_data["Color"] = chart_data['Item'].apply(item_to_color)
-            chart = alt.Chart(chart_data).mark_bar().encode(
-                x=alt.X("Value ($):Q"),
-                y=alt.Y("Item:N", sort="-x", title = "", axis= alt.Axis(labelLimit=200)),
-                color=alt.Color(
-                    "Color:N",
-                    scale=None,
-                    legend=None
-                ),
-                tooltip=["Item", "Value ($)"]
-            )
-            st.altair_chart(chart)
+            st.altair_chart(top_producers_chart("Value ($)", week_top_producer_stats, 5))
+
 
 """
 ## Raw Data
 
 """
 st.dataframe(df_filter_plant[['Date', 'Item', 'Weight (lb)', 'Value ($)']])
-
-
-
-with st.bottom:
-    st.caption("Value is calculated based on the price of equivalent item at Whole Foods.")

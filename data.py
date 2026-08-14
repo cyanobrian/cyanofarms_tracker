@@ -7,17 +7,17 @@ def item_to_color(item):
     # Converts series of items to hex code colors 
     colors = {
     "Arugula": "#4F8A3D",
-    "Basil": "#176B4A",
-    "Beet Greens": "#789447",
+    "Basil": "#245E32",
+    "Beet Greens": "#88AE47",
     "Chickpeas": "#D4A84F",
-    "Kale, Vates": "#245B3A",
+    "Kale, Vates": "#176B6B",
     "Kale, Red Russian": "#874F68",
     "Oyster Mushrooms": "#A99B8C",
     "Summer Squash": "#E0C13A",
     "Swiss Chard": "#2E7D6B",
     "Tomatoes": "#C8463D",
-    "Zucchini, Elite": "#7FAE3F",
-    "Zucchini, Costata Romanesco": "#B7A83D"
+    "Zucchini, Elite": "#054705",
+    "Zucchini, Costata Romanesco": "#6E8B2E"
     }
 
     return colors[item]
