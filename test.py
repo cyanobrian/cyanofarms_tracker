@@ -7,5 +7,6 @@ ttl="10m",
 usecols=list(range(0,7)),
 nrows=89
 )
+data.groupby('Date', )
 print(data)
 
