@@ -1,5 +1,7 @@
 import altair as alt
 import streamlit as st
+import plotly.graph_objects as go
+import streamlit as st
 
 def render_top_producers_chart(data, metric_name, num_to_display = 5): 
     # Given metric (str), "Value" or "Weight"
@@ -33,6 +35,130 @@ def render_top_producers_chart(data, metric_name, num_to_display = 5):
     st.altair_chart(chart + labels)
 
 
+# def render_main_bar(data, granularity, metric, include_bars=True):
+
+#     index_col = 'Week Range' if granularity == 'Week' else 'Date'
+#     metric_col = 'Weight (lb)' if metric == 'Weight' else 'Value ($)'
+
+#     # Aggregate if using weekly data
+#     if granularity != 'Day':
+#         data = (
+#             data.groupby([index_col, 'Item'], as_index=False)
+#             .agg({
+#                 metric_col: 'sum',
+#                 'Color': 'first'
+#             })
+#         )
+
+#     st.header(f"Harvest by {granularity}")
+
+#     # Create total for each time period
+#     bar_heights = (
+#         data.groupby(index_col, as_index=False)[metric_col]
+#         .sum()
+#     )
+
+#     fig = go.Figure()
+
+#     # Add bars
+#     if include_bars:
+#         for item in data['Item'].unique():
+
+#             item_data = data[data['Item'] == item]
+
+#             color = item_data['Color'].iloc[0]
+
+#             fig.add_trace(
+#                 go.Bar(
+#                     x=item_data[index_col],
+#                     y=item_data[metric_col],
+#                     name=item,
+#                     marker_color=color,
+#                     hovertemplate=(
+#                         f"{index_col}: %{{x}}<br>"
+#                         f"Item: {item}<br>"
+#                         f"{metric_col}: %{{y:.2f}}"
+#                         "<extra></extra>"
+#                     )
+#                 )
+#             )
+
+#     # Add total labels above each bar
+#     if include_bars:
+
+#         fig.add_trace(
+#             go.Scatter(
+#                 x=bar_heights[index_col],
+#                 y=bar_heights[metric_col],
+#                 mode='text',
+#                 text=bar_heights[metric_col].map(lambda x: f"{x:.2f}"),
+#                 textposition='top center',
+#                 textfont=dict(
+#                     color='#e2e8f0'
+#                 ),
+#                 showlegend=False,
+#                 hoverinfo='skip'
+#             )
+#         )
+
+#     # Horizontal scrolling
+#     # Increase this to make each time period wider.
+#     chart_width = max(800, len(bar_heights) * 80)
+
+#     fig.update_layout(
+#         width=chart_width,
+#         height=500,
+
+#         barmode='stack',
+
+#         xaxis=dict(
+#             title='Week' if granularity == 'Week' else 'Date',
+#             type='category',
+#             tickangle=0,
+#         ),
+
+#         yaxis=dict(
+#             title=metric_col
+#         ),
+
+#         showlegend=False,
+
+#         margin=dict(
+#             l=50,
+#             r=20,
+#             t=30,
+#             b=50
+#         )
+#     )
+
+#     # Streamlit horizontal scroll container
+#     st.markdown(
+#         f"""
+#         <div style="
+#             width: 100%;
+#             overflow-x: auto;
+#             overflow-y: hidden;
+#         ">
+#             <div style="width: {chart_width}px;">
+#         """,
+#         unsafe_allow_html=True
+#     )
+
+#     st.plotly_chart(
+#         fig,
+#         # use_container_width=False,
+#         config={
+#             'displayModeBar': False
+#         }
+#     )
+
+#     st.markdown(
+#         """
+#             </div>
+#         </div>
+#         """,
+#         unsafe_allow_html=True
+#     )
 def render_main_bar(data, granularity, metric, include_bars = True):
     index_col = 'Week Range' if granularity=='Week' else 'Date'
     metric_col = 'Weight (lb)' if metric == 'Weight' else 'Value ($)'

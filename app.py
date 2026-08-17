@@ -23,6 +23,41 @@ Cyano Farms is an organic smallholder farm operated by Brian. We’ve supplied o
 At the core of everything we do is a commitment to organic and sustainable agricultural practices. We used only upcycled materials, diverting hundreds of pounds of waste from the landfill to construct our raised beds, trellises, and plant covers. In addition, we collect gray or rain water to water out plants and use only organic pesticides and fertilizers. 
 
 """
+with st.expander("Complete 2026 Growing List"):
+    st.markdown("""
+    Squash 
+    * Elite Zucchini
+    * Costata Romanesco Zucchini 
+    * Multipik Summer Squash 
+    * Butternut Squash 
+    * Kabocha Squash 
+
+    Leafy Greens 
+    * Vates Kale (Dward Blue Scotch)
+    * Red Russian Kale
+    * Rainbow Swiss Chard 
+    * Roquette Arugula
+    * Goji Shoots 
+
+    Root Veggies
+    * Rainbow Carrots
+    * Icicle Radishes 
+    * Detroit Dark Red Beets 
+
+    Herbs
+    * Wegan Parsley
+    * Genoveses Basil 
+    * Cilantro 
+    * Scallions
+    * Chives
+    * Toon (Beef & Onions Plant )
+
+    Other 
+    * Kala Chana (Black Chickpeas)
+    * Blue Oyster Mushrooms 
+    * Red Potatoes
+    * Manchurian Wild Rice 
+    """)
 
 "" 
 ""
