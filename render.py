@@ -1,6 +1,6 @@
 import altair as alt
 import streamlit as st
-import plotly.graph_objects as go
+# import plotly.graph_objects as go
 import streamlit as st
 
 def render_top_producers_chart(data, metric_name, num_to_display = 5): 
