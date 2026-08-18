@@ -2,6 +2,7 @@ import altair as alt
 import streamlit as st
 # import plotly.graph_objects as go
 import streamlit as st
+import pandas as pd
 
 def render_top_producers_chart(data, metric_name, num_to_display = 5): 
     # Given metric (str), "Value" or "Weight"
@@ -182,7 +183,10 @@ def render_main_bar(data, period, metric, include_bars = 'Visible'):
     if period == 'Week': 
         x_axis = alt.X(axis_label, title="Week", axis=alt.Axis(labelAngle=0))
     else: 
-        x_axis = alt.X(axis_label, title='Date', axis=alt.Axis(format = '%m/%d', labelAngle=0))
+        max_date = data[index_col].max()
+        min_date = max_date - pd.Timedelta(days=30)
+        x_axis = alt.X(axis_label, title='Date', axis=alt.Axis(format = '%m/%d', labelAngle=0),
+                       scale=alt.Scale(domain = [min_date, max_date]))
 
     bar = alt.Chart(data).mark_bar().encode(
             x= x_axis,
@@ -197,7 +201,7 @@ def render_main_bar(data, period, metric, include_bars = 'Visible'):
                 alt.Tooltip("Item:N"),
                 alt.Tooltip(f'{metric_col}:Q', format=".2f"),
             ],
-        )
+        ).interactive(bind_y = False)
     st.header(f"Harvest by {period}")
 
     if include_bars == 'Invisible':
