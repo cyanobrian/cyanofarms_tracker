@@ -94,9 +94,6 @@ with st.container(border = True):
 
     render_main_bar(df_selected_crops, peri_selection, metric_selection, bar_height_toggle)
     render_cumulative(df_selected_crops, peri_selection, metric_selection, bar_height_toggle)
-        
-# Cumulative charts 
-
 
 sum_stats = calculate_summary_stats(df_selected_crops)
 top_producer_stats = calculate_top_producers(df_selected_crops)
