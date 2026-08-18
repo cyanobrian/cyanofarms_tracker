@@ -11,6 +11,7 @@ def render_top_producers_chart(data, metric_name, num_to_display = 5):
 
     data = data[metric][0:min(len(data[metric]), num_to_display)] # Get top 5
     # data["Color"] = data['Item'].apply(item_to_color)
+
     chart = alt.Chart(data).mark_bar().encode(
         x=alt.X(f'{metric_name}:Q'), 
         y=alt.Y("Item:N", sort="-x", title = "", axis= alt.Axis(labelLimit=200)),
@@ -31,7 +32,9 @@ def render_top_producers_chart(data, metric_name, num_to_display = 5):
         y=alt.Y("Item:N", sort="-x"),
         text=alt.Text(f"{metric_name}:Q", format=",.2f")
     )
-
+    # title=alt.TitleParams(text = f'Top Producers by {metric_name}', anchor = 
+    #                                               'middle',fontWeight='normal' )
+    
     st.altair_chart(chart + labels)
 
 
@@ -159,10 +162,10 @@ def render_top_producers_chart(data, metric_name, num_to_display = 5):
 #         """,
 #         unsafe_allow_html=True
 #     )
-def render_main_bar(data, granularity, metric, include_bars = True):
-    index_col = 'Week Range' if granularity=='Week' else 'Date'
+def render_main_bar(data, period, metric, include_bars = 'Visible'):
+    index_col = 'Week Range' if period=='Week' else 'Date'
     metric_col = 'Weight (lb)' if metric == 'Weight' else 'Value ($)'
-    if granularity != 'Day':
+    if period != 'Day':
         data = (
             data.groupby([index_col, 'Item'], as_index=False)
             .agg({
@@ -174,9 +177,9 @@ def render_main_bar(data, granularity, metric, include_bars = True):
 
 
 
-    axis_label = {'Week': 'Week Range:O', 'Day': "Date:T"}[granularity]
+    axis_label = {'Week': 'Week Range:O', 'Day': "Date:T"}[period]
     x_axis = None
-    if granularity == 'Week': 
+    if period == 'Week': 
         x_axis = alt.X(axis_label, title="Week", axis=alt.Axis(labelAngle=0))
     else: 
         x_axis = alt.X(axis_label, title='Date', axis=alt.Axis(format = '%m/%d', labelAngle=0))
@@ -195,9 +198,9 @@ def render_main_bar(data, granularity, metric, include_bars = True):
                 alt.Tooltip(f'{metric_col}:Q', format=".2f"),
             ],
         )
-    st.header(f"Harvest by {granularity}")
+    st.header(f"Harvest by {period}")
 
-    if not include_bars:
+    if include_bars == 'Invisible':
         st.altair_chart(bar) 
         return 
     
@@ -217,6 +220,54 @@ def render_main_bar(data, granularity, metric, include_bars = True):
         y=alt.Y(f'{metric_col}:Q'),
         text=alt.Text(
             f'{metric_col}:Q',
+            format=".2f"
+        )
+    )
+    st.altair_chart(bar + labels)   
+
+
+def render_cumulative(data, period, metric, include_bars = 'Visible'):
+    index_col = 'Week Range' if period=='Week' else 'Date'
+    metric_col = 'Weight (lb)' if metric == 'Weight' else 'Value ($)'
+
+    # Add cumulative sum column 
+    data = data.groupby([index_col], as_index=False).agg({metric_col:'sum'})
+    cum_col = f'Cumulative {metric_col}'
+    data[cum_col] = data[metric_col].cumsum()
+
+
+    axis_label = {'Week': 'Week Range:O', 'Day': "Date:T"}[period]
+    x_axis = None
+    if period == 'Week': 
+        x_axis = alt.X(axis_label, title="Week", axis=alt.Axis(labelAngle=0))
+    else: 
+        x_axis = alt.X(axis_label, title='Date', axis=alt.Axis(format = '%m/%d', labelAngle=0))
+
+    bar = alt.Chart(data).mark_line().encode(
+            x= x_axis,
+            y=alt.Y(f'{cum_col}:Q', title=cum_col),
+            tooltip=[
+                alt.Tooltip(axis_label),
+                alt.Tooltip("Item:N"),
+                alt.Tooltip(f'{cum_col}:Q', format=".2f"),
+            ],
+        )
+    st.header(f"Cumulative Harvest by {period}")
+    if include_bars == 'Invisible':
+        st.altair_chart(bar) 
+        return 
+    
+    # Include labels if specified 
+    labels = alt.Chart(data).mark_text(
+        align="center",
+        baseline="bottom",
+        dy=-5,
+        color= "#e2e8f0"
+    ).encode(
+        x=x_axis,
+        y=alt.Y(f'{cum_col}:Q'),
+        text=alt.Text(
+            f'{cum_col}:Q',
             format=".2f"
         )
     )

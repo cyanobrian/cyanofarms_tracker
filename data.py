@@ -39,7 +39,7 @@ def load_data():
     # Convert week column to the week start day 
     df['Date'] = pd.to_datetime(df['Date'])
 
-    # insert 0 for each crop on days when no harvests 
+    # insert 0 for each crop on days when no harvests, create a sparse representation of data
     df = df.pivot_table(values=['Weight (lb)', 'Value ($)'], index=['Date', 'Item'], aggfunc='sum', fill_value= 0, observed = False).reset_index()
 
     # Add Week Range 
@@ -86,7 +86,15 @@ def calculate_top_producers(df):
 
     return (best_weight, best_value)
 
+def get_cumulative_data(df): 
+    index_col = 'Date' # 'Week Range'
+    metric_col = 'Weight (lb)' #'Value ($)'
+    data = df.groupby([index_col], as_index=False).agg({metric_col:'sum'})
+    df[f'Cumulative {metric_col}'] = df[metric_col].cumsum()
+
+    # print(df.head(20))
 
 
 
 # df = load_data()
+# get_cumulative_data(df)

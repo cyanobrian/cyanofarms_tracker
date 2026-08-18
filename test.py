@@ -1,12 +1,22 @@
-import streamlit as st 
-from streamlit_gsheets import GSheetsConnection
-import pandas as pd 
-conn = st.connection("gsheets", type=GSheetsConnection)
-data = conn.read( worksheet="Harvesting",
-ttl="10m",
-usecols=list(range(0,7)),
-nrows=89
-)
-data.groupby('Date', )
-print(data)
+import streamlit as st
+import plotly.express as px
+import pandas as pd
+import numpy as np
 
+df = pd.DataFrame({
+    'Position': range(1, 10001),  # Example range, adjust according to your data
+    'Value': np.random.randn(10000)  # Random data for demonstration
+})
+
+fig = px.line(df, x='Position', y='Value')
+
+fig.update_layout(
+    xaxis=dict(
+        rangeslider=dict(
+            visible=True
+        ),
+        type="linear"
+    )
+)
+
+st.plotly_chart(fig, use_container_width=True)
