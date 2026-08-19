@@ -3,7 +3,16 @@ import streamlit as st
 from streamlit_gsheets import GSheetsConnection
 
 def item_to_color(item):
-    # Converts series of items to hex code colors 
+    '''
+    Given an crop, return the corresponding color hex code 
+
+    Parameters: 
+    item (str): name of the crop 
+
+    Returns: 
+    str: corresponding color hex value 
+    '''
+    # Converts items to corresponding hex code colors 
     colors = {
     "Arugula": "#4F8A3D",
     "Basil": "#245E32",
@@ -23,7 +32,16 @@ def item_to_color(item):
 
 
 def load_data():
-    # Create a connection object.
+    '''
+    Load the data from the google sheet in secrets.toml and necessary data cleaning operations 
+
+    Parameters: 
+    None 
+
+    Returns: 
+    Dataframe: Dataframe of cleaned data 
+    '''
+    # Create a connection object
     conn = st.connection("gsheets", type=GSheetsConnection)
     df = conn.read(worksheet="Harvesting",ttl="10m",usecols=list(range(0,7)),nrows=200)
 
@@ -36,10 +54,10 @@ def load_data():
     for col in col_to_num: 
         df[col] = pd.to_numeric(df[col])
 
-    # Convert week column to the week start day 
+    # Convert date to Pandas datetime object 
     df['Date'] = pd.to_datetime(df['Date'])
 
-    # insert 0 for each crop on days when no harvests, create a sparse representation of data
+    # Create a sparse representation of datan by inserting 0 for each crop on days when no harvests, 
     df = df.pivot_table(values=['Weight (lb)', 'Value ($)'], index=['Date', 'Item'], aggfunc='sum', fill_value= 0, observed = False).reset_index()
 
     # Add Week Range 
@@ -54,6 +72,15 @@ def load_data():
     return df 
 
 def calculate_summary_stats(df):
+    '''
+    Calculate metrics to display on dashboard 
+    Parameters: 
+    df (Dataframe): Dataframe with the cleaned data
+
+    Returns: 
+    Dictionary: contains value for total weight and value of entire season, 
+        current week (since most recent Sunday), and current day 
+    '''
     summary_stats = {} 
 
     # Season Total Data 
@@ -76,25 +103,87 @@ def calculate_summary_stats(df):
     return summary_stats
 
 def calculate_top_producers(df): 
+    '''
+    Calculate top producing crops by weight and value   
+    Parameters: 
+    df (Dataframe): Dataframe with the cleaned data
+
+    Returns: 
+    Tuple: (Dataframe, Dataframe), contains the top producers by weight at 0 and top producers by value 1 
+    None: If the length of the argument Dataframe  is 0 
+    '''
     if len(df) == 0: 
         return None
-    df_item_pivot = pd.pivot_table(df, values=['Weight (lb)', 'Value ($)'], index='Item', aggfunc='sum')
-    best_value = df_item_pivot.sort_values('Value ($)', ascending=False).reset_index()
-    best_weight = df_item_pivot.sort_values('Weight (lb)', ascending=False).reset_index()
-    best_value['Color'] = best_value['Item'].apply(item_to_color)
-    best_weight['Color'] = best_weight['Item'].apply(item_to_color)
-
+    # Aggregate the data based on Item and get the sum of weight and value 
+    aggreg_data = df.groupby('Item', as_index=False).agg({
+                            'Weight (lb)':'sum',
+                            'Value ($)': 'sum',
+                            "Color": 'first'
+                        })
+    
+    # Sort the data 
+    best_value = aggreg_data.sort_values('Value ($)', ascending=False).reset_index(drop=True)
+    best_weight = aggreg_data.sort_values('Weight (lb)', ascending=False).reset_index(drop=True)
     return (best_weight, best_value)
 
-def get_cumulative_data(df): 
-    index_col = 'Date' # 'Week Range'
-    metric_col = 'Weight (lb)' #'Value ($)'
-    data = df.groupby([index_col], as_index=False).agg({metric_col:'sum'})
-    df[f'Cumulative {metric_col}'] = df[metric_col].cumsum()
+def position_change(df, time): 
+    None
+# def get_cumulative_data(df): 
+#     '''
+#     Calculate a cumulative sum of the data 
 
-    # print(df.head(20))
+#     Parameters: 
+#     df (Dataframe): Dataframe with the cleaned data
 
+#     Returns: 
+#     '''
+#     index_col = 'Date' # 'Week Range'
+#     metric_col = 'Weight (lb)' #'Value ($)'
+#     data = df.groupby([index_col], as_index=False).agg({metric_col:'sum'})
+#     df[f'Cumulative {metric_col}'] = df[metric_col].cumsum()
 
+def calculate_top_producers_change(df, metric): 
+    '''
+    Calculate change in position for top performing crops
+    Parameters: 
+    df (Dataframe): Dataframe with the cleaned data
 
-# df = load_data()
+    Returns: 
+    Tuple: (Dataframe, Dataframe), contains the top producers by weight at 0 and top producers by value 1 
+    None: If the length of the argument Dataframe  is 0 
+    '''
+    if len(df) == 0: 
+        return None
+    metric_col = 'Weight (lb)' if metric == 'Weight' else 'Value ($)'
+
+    most_recent_saturday = pd.offsets.Week(weekday=5).rollback(pd.Timestamp.today().normalize())
+    prev_df = df[df['Date'] <= most_recent_saturday]
+
+    agg_data = lambda x, m: x.groupby('Item', as_index=False).agg({
+                            m:'sum',
+                            "Color": 'first'
+                        }).sort_values(m, ascending=False).reset_index(drop= True).reset_index()
+
+    prev = agg_data(prev_df, metric_col)
+    curr = agg_data(df, metric_col)
+
+    merged = pd.merge(curr, prev, on='Item')
+    merged['Positional Change'] = merged['index_y']-merged['index_x']
+    print(merged)
+
+    # merged[['index_x', 'Item', f'{metric_col}_x', 'Positional Change']]
+    
+    # Sort the data 
+    # best_value = aggreg_data.sort_values('Value ($)', ascending=False).reset_index()
+    # best_weight = aggreg_data.sort_values('Weight (lb)', ascending=False).reset_index()
+    # return (best_weight, best_value)
+df = load_data()
+# agged = df.groupby('Item', as_index=False).agg({
+#     'Weight (lb)':'sum',
+#     'Value ($)': 'sum',
+#     "Color": 'first'
+#     })
+
+# calculate_top_producers_change(df, 'Weight')
+# print(calculate_top_producers(calculate_top_producers(df)[1]))
 # get_cumulative_data(df)

@@ -93,10 +93,10 @@ with st.container(border = True):
     with st.container(horizontal=True, gap = 'medium'):
         metric_selection = st.pills("Metric", ['Weight', "Value"], default='Weight', required=True)
         peri_selection = st.pills("Period", ['Week', "Day"], default = 'Week', required=True)
-        bar_height_toggle = st.pills("Bar Heights", ['Visible', "Invisible"], default = 'Visible', required=True)
+        include_bars = st.pills("Bar Heights", ['Visible', "Invisible"], default = 'Visible', required=True) == 'Visible'
 
-    render_main_bar(df_selected_crops, peri_selection, metric_selection, bar_height_toggle)
-    render_cumulative(df_selected_crops, peri_selection, metric_selection, bar_height_toggle)
+    render_main_bar(df_selected_crops, peri_selection, metric_selection, include_bars)
+    render_cumulative(df_selected_crops, peri_selection, metric_selection, include_bars)
 
 sum_stats = calculate_summary_stats(df_selected_crops)
 top_producer_stats = calculate_top_producers(df_selected_crops)
@@ -133,9 +133,7 @@ with st.container(horizontal=True, gap="small"):
 
 """
 ## Last 7 Days
-
 """
-
 week_df = df_selected_crops[df_selected_crops['Date'] > pd.Timestamp.today().normalize() - pd.Timedelta(days=7)]
 week_sum_stats = calculate_summary_stats(week_df)
 week_top_producer_stats = calculate_top_producers(week_df)
@@ -170,7 +168,6 @@ st.divider()
 
 """
 ## Raw Data
-
 """
 non_sparse_selected_crops = df_selected_crops[df_selected_crops['Weight (lb)'] > 0]
 st.dataframe(non_sparse_selected_crops[['Date', 'Item', 'Weight (lb)', 'Value ($)']])
