@@ -28,7 +28,7 @@ with st.expander("Complete 2026 Growing List"):
         st.markdown("""
         **Squash**
         * Elite Zucchini
-        * Costata Romanesco Zucchini 
+        * Pantheon Zucchini 
         * Multipik Summer Squash 
         * Butternut Squash 
         * Kabocha Squash 
@@ -70,14 +70,17 @@ with st.expander("Complete 2026 Growing List"):
 # paths = ['images/'+ path for path in images]
 # img = [ImageOps.exif_transpose(Image.open(path)) for path in paths]
 
+# with st.container(horizontal= True):
+#     for image in img: 
+#         with st.container():
+#             st.image(image)
 
-# st.image(img, width= 300)
-
+st.divider() 
 
 st.header(f'2026 Harvests')
 
 # Filter crops 
-crop_selection = st.multiselect("Select crops", df['Item'].unique().sort_values(ascending = True),
+crop_selection = st.multiselect("Crop Selection", df['Item'].unique().sort_values(ascending = True),
                                 default = df['Item'].unique(), 
                                 accept_new_options=False
                                 )
@@ -163,6 +166,7 @@ with st.container(horizontal=True, gap="small"):
         if week_top_producer_stats is not None: 
             render_top_producers_chart(week_top_producer_stats, "Value ($)", 5)
 
+st.divider() 
 
 """
 ## Raw Data

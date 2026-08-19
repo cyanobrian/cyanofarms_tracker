@@ -16,7 +16,7 @@ def item_to_color(item):
     "Swiss Chard": "#2E7D6B",
     "Tomatoes": "#C8463D",
     "Zucchini, Elite": "#054705",
-    "Zucchini, Costata Romanesco": "#6E8B2E"
+    "Zucchini, Pantheon": "#6E8B2E"
     }
 
     return colors[item]

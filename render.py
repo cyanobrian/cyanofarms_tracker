@@ -183,6 +183,7 @@ def render_main_bar(data, period, metric, include_bars = 'Visible'):
     if period == 'Week': 
         x_axis = alt.X(axis_label, title="Week", axis=alt.Axis(labelAngle=0))
     else: 
+        # By default, display only harvests from the past 30 days to prevent overcrowding 
         max_date = data[index_col].max()
         min_date = max_date - pd.Timedelta(days=30)
         x_axis = alt.X(axis_label, title='Date', axis=alt.Axis(format = '%m/%d', labelAngle=0),
@@ -201,7 +202,7 @@ def render_main_bar(data, period, metric, include_bars = 'Visible'):
                 alt.Tooltip("Item:N"),
                 alt.Tooltip(f'{metric_col}:Q', format=".2f"),
             ],
-        ).interactive(bind_y = False)
+        ).interactive(name = "moomoo", bind_y = False)
     st.header(f"Harvest by {period}")
 
     if include_bars == 'Invisible':
@@ -255,7 +256,7 @@ def render_cumulative(data, period, metric, include_bars = 'Visible'):
                 alt.Tooltip("Item:N"),
                 alt.Tooltip(f'{cum_col}:Q', format=".2f"),
             ],
-        )
+        ).interactive(name = "moomoo", bind_y = False)
     st.header(f"Cumulative Harvest by {period}")
     if include_bars == 'Invisible':
         st.altair_chart(bar) 
