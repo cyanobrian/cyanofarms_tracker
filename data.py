@@ -90,14 +90,14 @@ def calculate_summary_stats(df):
     summary_stats['Total Value'] = df['Value ($)'].sum()
 
     # Current Week Data 
-    most_recent_saturday = pd.offsets.Week(weekday=5).rollback(pd.Timestamp.today().normalize())
+    most_recent_saturday = pd.offsets.Week(weekday=5).rollback(pd.Timestamp.now('US/Eastern').normalize())
     current_week = df[df['Date'] > most_recent_saturday] 
 
     summary_stats['Current Week Weight'] = current_week['Weight (lb)'].sum()
     summary_stats['Current Week Value'] = current_week['Value ($)'].sum()
 
     # Current Day Data
-    current_day = df[df['Date'] == pd.Timestamp.today().normalize()]
+    current_day = df[df['Date'] == pd.Timestamp.now('US/Eastern').normalize()]
     
     summary_stats['Current Day Weight'] = current_day['Weight (lb)'].sum()
     summary_stats['Current Day Value'] = current_day['Value ($)'].sum()

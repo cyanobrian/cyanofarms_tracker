@@ -101,10 +101,10 @@ with st.container(border = True):
     
     # st.header('Leaderboard')
     # options = {
-    #             'Today':pd.Timestamp.today().normalize(),
-    #             'Current Week': pd.offsets.Week(weekday=6).rollback(pd.Timestamp.today().normalize()),
-    #             'Last 7 Days': pd.Timestamp.today().normalize() - pd.Timedelta(days=6),
-    #             'Last 30 Days':pd.Timestamp.today().normalize() - pd.Timedelta(days=29),
+    #             'Today':pd.Timestamp.now('US/Eastern').normalize(),
+    #             'Current Week': pd.offsets.Week(weekday=6).rollback(pd.Timestamp.now('US/Eastern').normalize()),
+    #             'Last 7 Days': pd.Timestamp.now('US/Eastern').normalize() - pd.Timedelta(days=6),
+    #             'Last 30 Days':pd.Timestamp.now('US/Eastern').normalize() - pd.Timedelta(days=29),
     #             }
     # comparison_date = st.pills("Comparison Date", options.keys(), selection_mode="single", required= True, default='Today')
     # rank_data = calculate_change(df_selected_crops, metric_selection, options[comparison_date])
@@ -175,7 +175,7 @@ with st.container(horizontal=True, gap="small"):
             width="content",
             delta = f"{sum_stats['Current Week Weight']:.2f} lb",
             format = None,
-            delta_description= "Since " +  pd.offsets.Week(weekday=6).rollback(pd.Timestamp.today().normalize()).strftime('%m/%d')
+            delta_description= "Since " +  pd.offsets.Week(weekday=6).rollback(pd.Timestamp.now('US/Eastern').normalize()).strftime('%m/%d')
             )
 
         if top_producer_stats is not None:
@@ -188,7 +188,7 @@ with st.container(horizontal=True, gap="small"):
             width="content",
             delta = f"{sum_stats['Current Week Value']:.2f}",
             format = "dollar",
-            delta_description= "Since " +  pd.offsets.Week(weekday=6).rollback(pd.Timestamp.today().normalize()).strftime('%m/%d')
+            delta_description= "Since " +  pd.offsets.Week(weekday=6).rollback(pd.Timestamp.now('US/Eastern').normalize()).strftime('%m/%d')
             )
 
         if top_producer_stats is not None: 
@@ -197,7 +197,7 @@ with st.container(horizontal=True, gap="small"):
 """
 ## Last 7 Days
 """
-week_df = df_selected_crops[df_selected_crops['Date'] > pd.Timestamp.today().normalize() - pd.Timedelta(days=7)]
+week_df = df_selected_crops[df_selected_crops['Date'] > pd.Timestamp.now('US/Eastern').normalize() - pd.Timedelta(days=7)]
 week_sum_stats = calculate_summary_stats(week_df)
 week_top_producer_stats = calculate_top_producers(week_df)
 
