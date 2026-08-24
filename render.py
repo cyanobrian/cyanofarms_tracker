@@ -173,3 +173,58 @@ def render_cumulative(data, period, metric, include_bars):
         )
     )
     st.altair_chart(bar + labels)   
+
+
+
+def render_leaderboard(data, metric): 
+    '''
+    Render the top producers charts
+
+    Parameters: 
+    data (Tuple): (Dataframe, Dataframe) with the aggregated data, returned by calculate_top_producers(df)
+        Dataframe at index 0 is top producers by Weight and Dataframe at index 1 is top producers by Value 
+    metric (str): either 'Weight (lb)' or 'Value ($)', metric to measure production
+    num_to_display (int): display the top num_to_display producers for the metric 
+
+    Returns: 
+    None
+    '''
+
+    metric_col = f'Current {metric}'
+    metric_change = f'Weight Change (lb)'
+    # Create bar chart 
+    chart = alt.Chart(data).mark_bar().encode(
+        x=alt.X(f'{metric_col}:Q'), 
+        y=alt.Y("Item:N", sort="-x", title = "", axis= alt.Axis(labelLimit=200)),
+        color=alt.Color(
+            "Color:N",
+            scale=None,
+            legend=None
+        ),
+        tooltip=[alt.Tooltip("Item:N"), alt.Tooltip(f'{metric_col}:Q', format=".2f")]
+    )
+    # Add labels 
+    labels = alt.Chart(data).mark_text(
+        align="left",
+        baseline="middle",
+        dx=5,
+        color="white"
+    ).encode(
+        x=alt.X(f"{metric_col}:Q"),
+        y=alt.Y("Item:N", sort="-x"),
+        text=alt.Text(f"{metric_col}:Q", format=",.2f")
+    )
+    labels_2 = alt.Chart(data).mark_text(
+        align="right",
+        baseline="middle",
+        dx=5,
+        color="white"
+    ).encode(
+        x=alt.X(f"{metric_change}:Q"),
+        y=alt.Y("Item:N", sort="-x"),
+        text=alt.Text(f"{metric_change}:Q", format=",.2f")
+    )
+    # title=alt.TitleParams(text = f'Top Producers by {metric_name}', anchor = 
+    #                                               'middle',fontWeight='normal' )
+    
+    st.altair_chart(chart + labels+labels_2)

@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd 
-from data import load_data, calculate_summary_stats, calculate_top_producers
-from render import render_main_bar, render_top_producers_chart, render_cumulative
+from data import load_data, calculate_summary_stats, calculate_top_producers, calculate_change
+from render import render_main_bar, render_top_producers_chart, render_cumulative, render_leaderboard
 from PIL import Image, ImageOps
 
 
@@ -97,6 +97,69 @@ with st.container(border = True):
 
     render_main_bar(df_selected_crops, peri_selection, metric_selection, include_bars)
     render_cumulative(df_selected_crops, peri_selection, metric_selection, include_bars)
+    # render_leaderboard(calculate_change(df_selected_crops, 'Weight'), 'Weight (lb)')
+    
+    # st.header('Leaderboard')
+    # options = {
+    #             'Today':pd.Timestamp.today().normalize(),
+    #             'Current Week': pd.offsets.Week(weekday=6).rollback(pd.Timestamp.today().normalize()),
+    #             'Last 7 Days': pd.Timestamp.today().normalize() - pd.Timedelta(days=6),
+    #             'Last 30 Days':pd.Timestamp.today().normalize() - pd.Timedelta(days=29),
+    #             }
+    # comparison_date = st.pills("Comparison Date", options.keys(), selection_mode="single", required= True, default='Today')
+    # rank_data = calculate_change(df_selected_crops, metric_selection, options[comparison_date])
+
+    # st.dataframe(rank_data)
+
+
+    # def style_director(val):
+    #     colors_select = {
+    #     "Arugula": "#4F8A3D",
+    #     "Basil": "#245E32",
+    #     "Beet Greens": "#88AE47",
+    #     "Chickpeas": "#D4A84F",
+    #     "Kale, Vates": "#176B6B",
+    #     "Kale, Red Russian": "#874F68",
+    #     "Oyster Mushrooms": "#A99B8C",
+    #     "Summer Squash": "#B89C1F",
+    #     "Swiss Chard": "#2E7D6B",
+    #     "Tomatoes": "#C8463D",
+    #     "Zucchini, Elite": "#054705",
+    #     "Zucchini, Pantheon": "#6E8B2E"
+    #     }
+    #     color = colors_select.get(val, "#e5e7eb")
+
+    #     return (
+    #         f"background-color: {color};"
+    #         "border-radius: 6px;"
+    #         "color: #FFFFFF;"
+    #         "padding: 5px 5px;"
+    #         "font-weight: bold;"
+    #         "border : 0.5px solid white"
+    #         "display: inline-block;"
+    #     )
+
+
+    # styled = rank_data.style.map(style_director, subset=["Item"])
+    # st.table(styled)
+    # if metric_selection == 'Weight': 
+    #     with st.container(horizontal=True):
+    #         for index, rows in rank_data.iterrows():
+    #             st.metric(f'{index+1}. {rows['Item']}', f'{rows['Current Weight (lb)']:.2f} lb',
+    #                     delta = f'{rows['Rank Change']:+};  +{rows['Weight Change (lb)']:.2f} lb',
+    #                     delta_arrow='off',
+    #                     delta_color='off')
+
+    # else: 
+    #     with st.container(horizontal=True):
+    #         for index, rows in rank_data.iterrows():
+    #             st.metric(f'{index+1}. {rows['Item']}', f'${rows['Current Value ($)']:.2f}',
+    #                     delta = f'{rows['Rank Change']:+};  +${rows['Value Change ($)']:.2f}',
+    #                     # delta = [f'{rows['Rank Change']:+}',  f'+${rows['Value Change ($)']:.2f}'],
+    #                     delta_arrow='off',
+    #                     delta_color='off')
+    #     # print(rows['Current Weight (lb)'])
+
 
 sum_stats = calculate_summary_stats(df_selected_crops)
 top_producer_stats = calculate_top_producers(df_selected_crops)
@@ -170,4 +233,5 @@ st.divider()
 ## Raw Data
 """
 non_sparse_selected_crops = df_selected_crops[df_selected_crops['Weight (lb)'] > 0]
+# print(non_sparse_selected_crops)
 st.dataframe(non_sparse_selected_crops[['Date', 'Item', 'Weight (lb)', 'Value ($)']])

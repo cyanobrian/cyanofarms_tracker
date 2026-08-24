@@ -17,6 +17,7 @@ def item_to_color(item):
     "Arugula": "#4F8A3D",
     "Basil": "#245E32",
     "Beet Greens": "#88AE47",
+    "Butternut Squash": "#E19A3C",
     "Chickpeas": "#D4A84F",
     "Kale, Vates": "#176B6B",
     "Kale, Red Russian": "#874F68",
@@ -27,7 +28,8 @@ def item_to_color(item):
     "Zucchini, Elite": "#054705",
     "Zucchini, Pantheon": "#6E8B2E"
     }
-
+    if item not in colors: 
+        return "#525252"
     return colors[item]
 
 
@@ -69,7 +71,7 @@ def load_data():
     )
     # Add Color
     df['Color'] = df['Item'].apply(item_to_color)
-    return df 
+    return df
 
 def calculate_summary_stats(df):
     '''
@@ -142,7 +144,7 @@ def position_change(df, time):
 #     data = df.groupby([index_col], as_index=False).agg({metric_col:'sum'})
 #     df[f'Cumulative {metric_col}'] = df[metric_col].cumsum()
 
-def calculate_top_producers_change(df, metric): 
+def calculate_change(df, metric, comparison_date): 
     '''
     Calculate change in position for top performing crops
     Parameters: 
@@ -154,10 +156,10 @@ def calculate_top_producers_change(df, metric):
     '''
     if len(df) == 0: 
         return None
+    
     metric_col = 'Weight (lb)' if metric == 'Weight' else 'Value ($)'
 
-    most_recent_saturday = pd.offsets.Week(weekday=5).rollback(pd.Timestamp.today().normalize())
-    prev_df = df[df['Date'] <= most_recent_saturday]
+    prev_df = df[df['Date'] < comparison_date]
 
     agg_data = lambda x, m: x.groupby('Item', as_index=False).agg({
                             m:'sum',
@@ -168,16 +170,27 @@ def calculate_top_producers_change(df, metric):
     curr = agg_data(df, metric_col)
 
     merged = pd.merge(curr, prev, on='Item')
-    merged['Positional Change'] = merged['index_y']-merged['index_x']
-    print(merged)
+    merged['Rank Change'] = merged['index_y']-merged['index_x']
 
-    # merged[['index_x', 'Item', f'{metric_col}_x', 'Positional Change']]
-    
-    # Sort the data 
-    # best_value = aggreg_data.sort_values('Value ($)', ascending=False).reset_index()
-    # best_weight = aggreg_data.sort_values('Weight (lb)', ascending=False).reset_index()
-    # return (best_weight, best_value)
-df = load_data()
+    merged.drop(columns='Color_y', inplace= True)
+    merged.rename(columns={f'{metric_col}_x': f'Current {metric_col}', 
+                           f'{metric_col}_y': f'Previous {metric_col}',
+                           'index_x': 'Current Rank', 
+                           'index_y': 'Previous Rank', 
+                           'Color_x': 'Color'
+    }, inplace=True)
+    unit = '(lb)' if metric == 'Weight' else '($)'
+    merged[f'{metric} Change {unit}'] = merged[f'Current {metric_col}'] - merged[f'Previous {metric_col}']
+    # Reorder columns 
+    merged = merged[['Item', 'Color', 'Current Rank', 'Previous Rank', 'Rank Change', 
+                     f'Current {metric_col}', f'Previous {metric_col}', f'{metric} Change {unit}']]
+
+    merged = merged[['Item', 'Current Rank', 'Rank Change', 
+                         f'Current {metric_col}', f'{metric} Change {unit}']]
+    # merged[['Item', metric_col, ],]
+    return merged 
+
+# df = load_data()
 # agged = df.groupby('Item', as_index=False).agg({
 #     'Weight (lb)':'sum',
 #     'Value ($)': 'sum',
