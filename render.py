@@ -76,7 +76,7 @@ def render_main_bar(data, period, metric, include_bars = True):
     else: 
         index_col = 'Date'
         # Display only harvests from the past 30 days to prevent overcrowding if choosing days  
-        max_date = pd.Timestamp.today()()
+        max_date = pd.Timestamp.today()
         min_date = max_date - pd.Timedelta(days=30)
 
         x_axis = alt.X('Date:T', title='Date', axis=alt.Axis(format = '%m/%d', labelAngle=0),

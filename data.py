@@ -92,7 +92,6 @@ def calculate_summary_stats(df):
     # Current Week Data 
     # most_recent_saturday = pd.offsets.Week(weekday=5).rollback(pd.Timestamp.today().normalize())
     most_recent_saturday = pd.offsets.Week(weekday=5).rollback(pd.Timestamp.today().normalize())
-    print(most_recent_saturday)
     current_week = df[df['Date'] > most_recent_saturday] 
 
     summary_stats['Current Week Weight'] = current_week['Weight (lb)'].sum()
