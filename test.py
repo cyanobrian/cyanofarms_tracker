@@ -3,22 +3,56 @@ import plotly.express as px
 import pandas as pd
 import numpy as np
 
-print(pd.Timestamp.now('US/Eastern').normalize())
-print(pd.offsets.Week(weekday=5).rollback(pd.Timestamp.now('US/Eastern').normalize()))
-# df = pd.DataFrame({
-#     'Position': range(1, 10001),  # Example range, adjust according to your data
-#     'Value': np.random.randn(10000)  # Random data for demonstration
-# })
+import altair as alt
 
-# fig = px.line(df, x='Position', y='Value')
+# 1. Create dummy data with 10 categories
+data = pd.DataFrame({
+    'category': ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'],
+    'value': [95, 85, 75, 65, 55, 45, 35, 25, 15, 5],
+    'color':[
+    "#4A90E2",
+    "#50E3C2",
+    "#B8E986",
+    "#F5A623",
+    "#E2847A",
+    "#9B51E0",
+    "#34495E",
+    "#E74C3C",
+    "#2ECC71",
+    "#1ABC9C"
+]
 
-# fig.update_layout(
-#     xaxis=dict(
-#         rangeslider=dict(
-#             visible=True
-#         ),
-#         type="linear"
-#     )
-# )
+})
 
-# st.plotly_chart(fig, use_container_width=True)
+# 2. Define the top 5 categories you want to show initially
+top_5_categories = ['A', 'B', 'C', 'D', 'E']
+
+# 3. Create a pan/zoom selection bound only to the X-axis
+bind_pan_zoom = alt.selection_interval(
+    bind='scales', 
+    encodings=['x']
+)
+
+# 4. Build the chart
+chart = alt.Chart(data).mark_bar().encode(
+    x=alt.X(
+        'category:N', 
+        sort='-y',
+        # Force the initial view to show only the top 5 categories
+        scale=alt.Scale(domain=top_5_categories) 
+    ),
+    y=alt.Y('value:Q'),
+    color = alt.Color(
+        "color",
+        scale=None,
+        legend=None
+    )
+).add_params(
+    bind_pan_zoom
+).properties(
+    title="Top 5 Categories (Drag/Pan to see more)",
+    width=500,
+    height=300
+).interactive(bind_y= False)
+with st.container(): 
+    st.altair_chart(chart)

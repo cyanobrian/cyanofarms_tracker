@@ -93,7 +93,7 @@ with st.container(border = True):
     with st.container(horizontal=True, gap = 'medium'):
         metric_selection = st.pills("Metric", ['Weight', "Value"], default='Weight', required=True)
         peri_selection = st.pills("Period", ['Week', "Day"], default = 'Week', required=True)
-        include_bars = st.pills("Bar Heights", ['Visible', "Invisible"], default = 'Visible', required=True) == 'Visible'
+        include_bars = st.pills("Bar Heights", ['Show', "Hide"], default = 'Show', required=True) == 'Show'
 
     render_main_bar(df_selected_crops, peri_selection, metric_selection, include_bars)
     render_cumulative(df_selected_crops, peri_selection, metric_selection, include_bars)

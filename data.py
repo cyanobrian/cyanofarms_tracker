@@ -15,17 +15,17 @@ def item_to_color(item):
     # Converts items to corresponding hex code colors 
     colors = {
     "Arugula": "#4F8A3D",
-    "Basil": "#245E32",
+    "Basil": "#417025",
     "Beet Greens": "#88AE47",
     "Butternut Squash": "#E19A3C",
     "Chickpeas": "#D4A84F",
-    "Kale, Vates": "#176B6B",
+    "Kale, Vates": "#6B837D",
     "Kale, Red Russian": "#874F68",
     "Oyster Mushrooms": "#A99B8C",
     "Summer Squash": "#E0C13A",
-    "Swiss Chard": "#2E7D6B",
+    "Swiss Chard": "#77A05D",
     "Tomatoes": "#C8463D",
-    "Zucchini, Elite": "#054705",
+    "Zucchini, Elite": "#063A06",
     "Zucchini, Pantheon": "#6E8B2E"
     }
     if item not in colors: 
@@ -90,9 +90,8 @@ def calculate_summary_stats(df):
     summary_stats['Total Value'] = df['Value ($)'].sum()
 
     # Current Week Data 
-    # most_recent_saturday = pd.offsets.Week(weekday=5).rollback(pd.Timestamp.today().normalize())
-    most_recent_saturday = pd.offsets.Week(weekday=5).rollback(pd.Timestamp.today().normalize())
-    current_week = df[df['Date'] > most_recent_saturday] 
+    most_recent_sunday = pd.offsets.Week(weekday=6).rollback(pd.Timestamp.today().normalize())
+    current_week = df[df['Date'] >= most_recent_sunday] 
 
     summary_stats['Current Week Weight'] = current_week['Weight (lb)'].sum()
     summary_stats['Current Week Value'] = current_week['Value ($)'].sum()

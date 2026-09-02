@@ -18,21 +18,28 @@ def render_top_producers_chart(data, metric, num_to_display = 5):
     '''
 
     metric_col = { "Weight (lb)": 0, "Value ($)": 1}[metric]
-    data = data[metric_col][0:min(len(data[metric_col]), num_to_display)] # Get top 5 or less, all of them 
-
+    data_full = data[metric_col]
+    # items_to_display = data_full[0:min(len(data_full), num_to_display)]['Item'].to_list() # Get top 5 or less, all of them 
+    data_full = data_full[0:min(len(data_full), num_to_display)] # Get top 5 or less, all of them 
     # Create bar chart 
-    chart = alt.Chart(data).mark_bar().encode(
+    # y_axis = alt.Y('Item:N', sort = '-x', title = "", axis=alt.Axis(labelLimit=200),
+    #             scale=alt.Scale(domain = items_to_display))
+    y_axis = alt.Y('Item:N', sort = '-x', title = "", axis=alt.Axis(labelLimit=200),)
+                # scale=alt.Scale(domain = items_to_display))
+
+    chart = alt.Chart(data_full).mark_bar().encode(
         x=alt.X(f'{metric}:Q'), 
-        y=alt.Y("Item:N", sort="-x", title = "", axis= alt.Axis(labelLimit=200)),
+        # y=alt.Y("Item:N", sort="-x", title = "", axis= alt.Axis(labelLimit=200)),
+        y = y_axis,
         color=alt.Color(
             "Color:N",
             scale=None,
             legend=None
         ),
         tooltip=[alt.Tooltip("Item:N"), alt.Tooltip(f'{metric}:Q', format=".2f")]
-    )
+    ).interactive(bind_x = False)
     # Add labels 
-    labels = alt.Chart(data).mark_text(
+    labels = alt.Chart(data_full).mark_text(
         align="left",
         baseline="middle",
         dx=5,
