@@ -3,6 +3,85 @@ import streamlit as st
 import streamlit as st
 import pandas as pd
 
+# def render_top_producers_chart(data, metric, num_to_display=5):
+
+#     metric_col = {
+#         "Weight (lb)": 0,
+#         "Value ($)": 1
+#     }[metric]
+
+#     # Keep all producers
+#     data_full = data[metric_col].copy()
+
+#     # Ensure highest producers are first
+#     data_full = data_full.sort_values(
+#         metric,
+#         ascending=False
+#     )
+
+#     y_axis = alt.Y(
+#         "Item:N",
+#         sort=alt.EncodingSortField(
+#             field=metric,
+#             order="descending"
+#         ),
+#         title=""
+#     )
+
+#     bars = (
+#         alt.Chart(data_full)
+#         .mark_bar()
+#         .encode(
+#             x=alt.X(
+#                 f"{metric}:Q",
+#                 title=metric
+#             ),
+#             y=y_axis,
+#             color=alt.Color(
+#                 "Color:N",
+#                 scale=None,
+#                 legend=None
+#             ),
+#             tooltip=[
+#                 alt.Tooltip("Item:N"),
+#                 alt.Tooltip(
+#                     f"{metric}:Q",
+#                     format=",.2f"
+#                 )
+#             ]
+#         )
+#     )
+
+#     labels = (
+#         alt.Chart(data_full)
+#         .mark_text(
+#             align="left",
+#             baseline="middle",
+#             dx=5,
+#             color="white"
+#         )
+#         .encode(
+#             x=alt.X(f"{metric}:Q"),
+#             y=y_axis,
+#             text=alt.Text(
+#                 f"{metric}:Q",
+#                 format=",.2f"
+#             )
+#         )
+#     )
+
+#     chart = (
+#         bars + labels
+#     ).properties(
+#         height=150
+#     ).interactive(
+#         bind_x=False
+#     )
+
+#     st.altair_chart(
+#         chart,
+#         use_container_width=True
+#     )
 def render_top_producers_chart(data, metric, num_to_display = 5): 
     '''
     Render the top producers charts
@@ -16,7 +95,6 @@ def render_top_producers_chart(data, metric, num_to_display = 5):
     Returns: 
     None
     '''
-
     metric_col = { "Weight (lb)": 0, "Value ($)": 1}[metric]
     data_full = data[metric_col]
     # items_to_display = data_full[0:min(len(data_full), num_to_display)]['Item'].to_list() # Get top 5 or less, all of them 

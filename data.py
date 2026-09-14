@@ -45,7 +45,7 @@ def load_data():
     '''
     # Create a connection object
     conn = st.connection("gsheets", type=GSheetsConnection)
-    df = conn.read(worksheet="Harvesting",ttl="10m",usecols=list(range(0,7)),nrows=200)
+    df = conn.read(worksheet="Harvesting",ttl="10m",usecols=list(range(0,7)),nrows=500)
 
     # Clean the data 
     df = df.dropna(axis = 0, subset = ['Date', 'Item']) # Remove rows where 'Date' or 'Item' are Na
