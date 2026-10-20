@@ -17,7 +17,7 @@ def item_to_color(item):
     colors = {
         "Arugula": "#4F8A3D",
         "Basil": "#417025",
-        "Beets": "#D33441",
+        "Beets": "#700032",
         "Butternut Squash": "#E19A3C",
         "Carrots": "#E86F13",
         "Chickpeas": "#D4A84F",
